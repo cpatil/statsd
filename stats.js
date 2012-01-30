@@ -5,6 +5,7 @@ var dgram  = require('dgram')
 
 var counters = {};
 var timers = {};
+var gauges = {};
 var debugInt, flushInt, server, mgmtServer;
 var startup_time = Math.round(new Date().getTime() / 1000);
 
@@ -53,7 +54,11 @@ config.configFile(process.argv[2], function (config, oldConfig) {
             stats['messages']['bad_lines_seen']++;
             continue;
         }
-        if (fields[1].trim() == "ms") {
+        if (fields[1].trim() == "g") {
+            if (!gauges[key])
+                gauges[key] = [];
+            gauges[key].push([fields[0], Math.round(Date.now() / 1000)]);
+        } else if (fields[1].trim() == "ms") {
           if (! timers[key]) {
             timers[key] = [];
           }
@@ -189,6 +194,13 @@ config.configFile(process.argv[2], function (config, oldConfig) {
 
           numStats += 1;
         }
+      }
+
+      for (var key in gauges) {
+         statString += gauges[key].map(function(value) {
+             numStats += 1;
+             return 'stats.' + key + ' ' + value[0] + ' ' + value[1] + '\n';
+         }).join("");
       }
 
       statString += 'statsd.numStats ' + numStats + ' ' + ts + "\n";

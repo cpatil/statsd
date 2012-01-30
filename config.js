@@ -1,5 +1,6 @@
 var fs  = require('fs')
   , sys = require('sys')
+  , vm = require('vm');
 
 var Configurator = function (file) {
 
@@ -14,7 +15,7 @@ var Configurator = function (file) {
       if (err) { throw err; }
       old_config = self.config;
 
-      self.config = eval('config = ' + fs.readFileSync(file));
+      self.config = vm.runInThisContext('config = ' + data, file);
       self.emit('configChanged', self.config);
     });
   };
